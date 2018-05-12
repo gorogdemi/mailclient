@@ -54,7 +54,7 @@ public class AccountService {
 
     public void deleteAccount(Account account) {
         AccountDAOImpl dao = new AccountDAOImpl();
-        dao.remove(account);
+        dao.remove(dao.findById(account.getId()));
         dao.close();
         accounts.remove(account);
     }

@@ -5,28 +5,21 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.web.WebView?>
+<?import javafx.scene.text.Font?>
 
-<GridPane prefHeight="360.0" prefWidth="1111.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hu.unideb.inf.project.email.controller.MainController">
+<GridPane prefHeight="439.0" prefWidth="1118.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hu.unideb.inf.project.email.controller.MainController">
    <children>
-      <WebView fx:id="webBrowser" prefHeight="390.0" prefWidth="89.0" GridPane.halignment="RIGHT" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" VBox.vgrow="ALWAYS">
-         <VBox.margin>
-            <Insets left="300.0" />
-         </VBox.margin>
-         <GridPane.margin>
-            <Insets left="600.0" />
-         </GridPane.margin></WebView>
       <ListView fx:id="folderView" maxWidth="250.0" minHeight="0.0" minWidth="0.0" prefHeight="113.0" prefWidth="250.0" GridPane.halignment="LEFT" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets bottom="70.0" top="100.0" />
          </GridPane.margin>
       </ListView>
-      <ListView maxWidth="350.0" prefHeight="310.0" prefWidth="333.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+      <ListView fx:id="messageView" fixedCellSize="45.0" maxWidth="350.0" prefHeight="310.0" prefWidth="333.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets left="250.0" top="50.0" />
          </GridPane.margin>
@@ -41,12 +34,7 @@
             <Insets left="10.0" top="5.0" />
          </GridPane.margin>
       </Button>
-      <Button mnemonicParsing="false" prefHeight="35.0" prefWidth="60.0" text="Keresés" GridPane.valignment="TOP">
-         <GridPane.margin>
-            <Insets left="425.0" top="5.0" />
-         </GridPane.margin>
-      </Button>
-      <TextField fx:id="searchField" maxWidth="170.0" minHeight="0.0" minWidth="0.0" prefHeight="35.0" prefWidth="200.0" GridPane.valignment="TOP">
+      <TextField fx:id="searchField" maxWidth="232.0" minHeight="0.0" minWidth="0.0" prefHeight="35.0" prefWidth="232.0" promptText="Keresés" GridPane.valignment="TOP">
          <GridPane.margin>
             <Insets left="250.0" top="5.0" />
          </GridPane.margin>
@@ -61,20 +49,53 @@
             <Insets left="130.0" top="5.0" />
          </GridPane.margin>
       </Button>
-      <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="74.0" text="Új mappa" GridPane.valignment="BOTTOM">
+      <Button fx:id="newFolderButton" mnemonicParsing="false" onAction="#handleNewFolder" prefHeight="30.0" prefWidth="74.0" text="Új mappa" GridPane.valignment="BOTTOM">
          <GridPane.margin>
             <Insets bottom="20.0" left="10.0" />
          </GridPane.margin>
       </Button>
-      <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="74.0" text="Átnevezés" GridPane.valignment="BOTTOM">
+      <Button fx:id="modifyFolderButton" disable="true" mnemonicParsing="false" onAction="#handleModifyFolder" prefHeight="30.0" prefWidth="74.0" text="Átnevezés" GridPane.valignment="BOTTOM">
          <GridPane.margin>
             <Insets bottom="20.0" left="90.0" />
          </GridPane.margin>
       </Button>
-      <Button mnemonicParsing="false" prefHeight="30.0" prefWidth="67.0" text="Törlés" GridPane.valignment="BOTTOM">
+      <Button fx:id="deleteFolderButton" disable="true" mnemonicParsing="false" onAction="#handleDeleteFolder" prefHeight="30.0" prefWidth="67.0" text="Törlés" GridPane.valignment="BOTTOM">
          <GridPane.margin>
             <Insets bottom="20.0" left="170.0" />
          </GridPane.margin></Button>
+      <TextArea fx:id="emailView" editable="false" prefHeight="200.0" prefWidth="512.0" wrapText="true">
+         <GridPane.margin>
+            <Insets left="600.0" top="50.0" />
+         </GridPane.margin>
+         <font>
+            <Font size="13.0" />
+         </font>
+      </TextArea>
+      <Button fx:id="answerButton" disable="true" mnemonicParsing="false" onAction="#handleReply" prefHeight="35.0" prefWidth="78.0" text="Válasz" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="605.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
+      <Button fx:id="answerAllButton" disable="true" mnemonicParsing="false" onAction="#handleReplyAll" prefHeight="35.0" prefWidth="127.0" text="Válasz mindenkinek" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="690.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
+      <Button fx:id="forwardButton" disable="true" mnemonicParsing="false" onAction="#handleForward" prefHeight="35.0" prefWidth="83.0" text="Továbbítás" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="824.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
+      <Button fx:id="deleteEmailButton" disable="true" mnemonicParsing="false" onAction="#handleDeleteEmail" prefHeight="35.0" prefWidth="78.0" text="Törlés" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="914.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
+      <Button fx:id="moveEmailButton" disable="true" mnemonicParsing="false" onAction="#handleMoveEmail" prefHeight="35.0" prefWidth="78.0" text="Áthelyezés" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="1000.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
    </children>
    <columnConstraints>
       <ColumnConstraints />

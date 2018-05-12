@@ -28,13 +28,19 @@ public class EmailMessage {
 
     private String body;
 
+    private boolean isRead;
+
+    private boolean isDeleted;
+
+    private int uid;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private MailboxFolder folder;
 
     public EmailMessage() {
     }
 
-    public EmailMessage(String sender, String recipients, String cc, String bcc, LocalDateTime time, String subject, String body) {
+    public EmailMessage(String sender, String recipients, String cc, String bcc, LocalDateTime time, String subject, String body, boolean isRead, boolean isDeleted, int uid, MailboxFolder folder) {
         this.sender = sender;
         this.recipients = recipients;
         this.cc = cc;
@@ -42,6 +48,10 @@ public class EmailMessage {
         this.time = time;
         this.subject = subject;
         this.body = body;
+        this.isRead = isRead;
+        this.isDeleted = isDeleted;
+        this.uid = uid;
+        this.folder = folder;
     }
 
     public int getId() {
@@ -106,5 +116,37 @@ public class EmailMessage {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public boolean isRead() {
+        return isRead;
+    }
+
+    public void setRead(boolean read) {
+        isRead = read;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+    public MailboxFolder getFolder() {
+        return folder;
+    }
+
+    public void setFolder(MailboxFolder folder) {
+        this.folder = folder;
     }
 }

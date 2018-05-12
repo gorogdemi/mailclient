@@ -34,7 +34,7 @@ public class MainApp extends Application {
             e.printStackTrace();
         }
         primaryStage.setTitle("Email kliens");
-        primaryStage.setScene(new Scene(mainParent, 1000, 600));
+        primaryStage.setScene(new Scene(mainParent, 1280, 720));
         primaryStage.setOnShown(event -> {
             if (ACCOUNT_SERVICE.getAccountCount() == 1) {
                 MainController mainController = mainLoader.getController();

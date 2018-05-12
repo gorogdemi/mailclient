@@ -1,5 +1,7 @@
 package hu.unideb.inf.project.email.service;
 
+import com.sun.mail.pop3.POP3Folder;
+import hu.unideb.inf.project.email.dao.EmailMessageDAOImpl;
 import hu.unideb.inf.project.email.model.Account;
 import hu.unideb.inf.project.email.model.EmailMessage;
 import hu.unideb.inf.project.email.model.MailboxFolder;
@@ -9,9 +11,12 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import javax.mail.search.SearchTerm;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class EmailService {
 
@@ -29,6 +34,7 @@ public class EmailService {
         properties.put("mail.smtp.starttls.enable", account.isSecure());
         properties.put("mail.smtp.host", account.getSmtpServerAddress());
         properties.put("mail.smtp.port", account.getSmtpServerPort());
+        properties.put("mail.mime.charset", "utf-8");
 
         this.emailSession = Session.getDefaultInstance(properties);
         this.account = account;
@@ -47,7 +53,6 @@ public class EmailService {
             message.setSentDate(getCurrentDateTime());
             message.setSubject(subject);
             message.setText(body);
-
             sendMessage(message);
             saveToSent(message);
         } catch (MessagingException | IOException e) {
@@ -57,82 +62,110 @@ public class EmailService {
 
     public EmailMessage getReplyMessage(EmailMessage message) {
         return new EmailMessage(account.getEmailAddress(), message.getSender(), null, null, null,
-            "RE: " + message.getSubject(), "\n\n" + message.getBody());
+            "RE: " + message.getSubject(), "\n\n------------------------------------\n" + message.getBody(),false, false, -1, null);
 
     }
 
     public EmailMessage getReplyToAllMessage(EmailMessage message) {
         return new EmailMessage(account.getEmailAddress(), message.getSender() + ";" + getRecipientsWithoutOwnAddress(message.getRecipients()),
-                message.getCc(), null, null,"RE: " + message.getSubject(), "\n\n" + message.getBody());
+                message.getCc(), null, null,"RE: " + message.getSubject(), "\n\n------------------------------------\n" + message.getBody(), false, false, -1, null);
     }
 
     public EmailMessage getForwardMessage(EmailMessage message) {
         return new EmailMessage(account.getEmailAddress(), null, null, null, null,
-                "FW: " + message.getSubject(), "\n\n" + message.getBody());
+                "FW: " + message.getSubject(), "\n\n------------------------------------\n" + message.getBody(), false, false, -1, null);
     }
 
-    public void deleteEmail(String folderName, int messageNumber) {
-        MailboxFolder emailFolder = folderService.getFolder(folderName);
-        EmailMessage message = emailFolder.getMessages().get(messageNumber);
-        if (emailFolder == folderService.getDeletedFolder()) {
-            emailFolder.getMessages().remove(message);
-            //TODO Persist
+    public void deleteEmail(EmailMessage message, MailboxFolder source) {
+        if (source == folderService.getDeletedFolder()) {
+            EmailMessageDAOImpl dao = new EmailMessageDAOImpl();
+            EmailMessage newMessage = dao.findById(message.getId());
+            newMessage.setDeleted(true);
+            dao.persist(newMessage);
+            dao.close();
+            source.getMessages().remove(message);
         }
         else
-            folderService.moveMessage(message, folderService.getDeletedFolder());
+            folderService.moveMessage(message, source, folderService.getDeletedFolder());
     }
 
-    public List<EmailMessage> searchEmails(String filter) {
-        return null; //TODO
+    public void setRead(EmailMessage message) {
+        EmailMessageDAOImpl dao = new EmailMessageDAOImpl();
+        EmailMessage newMessage = dao.findById(message.getId());
+        newMessage.setRead(true);
+        dao.persist(newMessage);
+        dao.close();
     }
 
-    private List<EmailMessage> receiveEmailsFromServer() {
+    public List<EmailMessage> searchEmails(List<EmailMessage> messages, String filterText, Boolean isRead) {
+        return messages.stream().filter(x -> (x.getRecipients().toLowerCase().contains(filterText)
+                || (x.getCc() != null && x.getCc().toLowerCase().contains(filterText)) || x.getSender().toLowerCase().contains(filterText)
+                || x.getSubject().toLowerCase().contains(filterText) || x.getBody().toLowerCase().contains(filterText)) && (isRead == null || x.isRead() == isRead)).collect(Collectors.toList());
+    }
 
-        List<EmailMessage> messageList = new ArrayList<>();
+    public List<EmailMessage> getEmailsFromFolder(MailboxFolder folder) {
+        if (folder == folderService.getInboxFolder()) {
+            receiveNewEmailsFromServer();
+        }
+        return folder.getMessagesWithoutDeleted();
+    }
+
+    private void receiveNewEmailsFromServer() {
 
         try {
             Store emailStore = emailSession.getStore("pop3");
             emailStore.connect(account.getUserName(), account.getPassword());
-            Folder emailFolder = emailStore.getFolder("INBOX");
+            POP3Folder emailFolder = (POP3Folder)emailStore.getFolder("INBOX");
             emailFolder.open(Folder.READ_WRITE);
 
-            Message[] messages = emailFolder.getMessages();
+            EmailMessageDAOImpl dao = new EmailMessageDAOImpl();
+            int maxUid = dao.getMaxUid();
 
-            for (int i = 0; i < messages.length; i++) {
-                Message message = messages[i];
+            SearchTerm term = new SearchTerm() {
+                @Override
+                public boolean match(Message message) {
+                    try {
+                        return Integer.parseInt(emailFolder.getUID(message)) > maxUid;
+                    } catch (MessagingException ex) {
+                        ex.printStackTrace();
+                    }
+                    return false;
+                }
+            };
 
-                //TODO Persist every message
-
-                messageList.add(convertMessageToEmailMessage(message));
-                //message.setFlag(Flags.Flag.DELETED, true);
+            Message[] newMessages = emailFolder.search(term);
+            for (int i = 0; i < newMessages.length; i++) {
+                Message message = newMessages[i];
+                EmailMessage emailMessage = convertMessageToEmailMessage(message, false, Integer.parseInt(emailFolder.getUID(message)), folderService.getInboxFolder());
+                dao.persist(emailMessage);
 
                 //TODO Log
                 System.out.println("==============================");
                 System.out.println("EmailMessage #" + (i + 1));
-                System.out.println("SEEN: " + message.isSet(Flags.Flag.SEEN));
+                System.out.println("UID: " + emailFolder.getUID(message));
+                /*System.out.println("SEEN: " + message.isSet(Flags.Flag.SEEN));
                 System.out.println("RECENT: " + message.isSet(Flags.Flag.RECENT));
                 System.out.println("DELETED: " + message.isSet(Flags.Flag.DELETED));
                 System.out.println("ANSWERED: " + message.isSet(Flags.Flag.ANSWERED));
-                System.out.println("FLAGGED: " + message.isSet(Flags.Flag.FLAGGED));
+                System.out.println("FLAGGED: " + message.isSet(Flags.Flag.FLAGGED));*/
                 System.out.println("Subject: " + message.getSubject());
                 System.out.println("From: " + message.getFrom()[0]);
                 System.out.println("Text: " + getTextFromMessage(message));
             }
 
+            dao.close();
             emailFolder.close(true);
             emailStore.close();
         } catch (MessagingException | IOException e) {
             e.printStackTrace();
         }
-
-        return messageList;
     }
 
     private String getRecipientsWithoutOwnAddress(String recipients) {
         StringBuilder sb = new StringBuilder();
-        for (String email : recipients.split(";"))
+        for (String email : recipients.split(","))
             if (!email.equals(account.getEmailAddress()))
-                sb.append(email).append(';');
+                sb.append(email).append(',');
         return sb.toString();
     }
 
@@ -144,17 +177,19 @@ public class EmailService {
     }
 
     private void saveToSent(Message message) throws MessagingException, IOException {
-        EmailMessage emailMessage = convertMessageToEmailMessage(message);
+        EmailMessage emailMessage = convertMessageToEmailMessage(message, true, -1, folderService.getSentFolder());
+        EmailMessageDAOImpl dao = new EmailMessageDAOImpl();
+        dao.persist(emailMessage);
+        dao.close();
         folderService.getSentFolder().getMessages().add(emailMessage);
-        //TODO Persist
     }
 
-    private EmailMessage convertMessageToEmailMessage(Message message) throws MessagingException, IOException {
+    private EmailMessage convertMessageToEmailMessage(Message message, boolean isRead, int uid, MailboxFolder folder) throws MessagingException, IOException {
         return new EmailMessage(InternetAddress.toString(message.getFrom()),
                 convertAddressArrayToString(message.getRecipients(Message.RecipientType.TO)),
                 message.getRecipients(Message.RecipientType.CC) != null ? convertAddressArrayToString(message.getRecipients(Message.RecipientType.CC)) : null,
                 message.getRecipients(Message.RecipientType.BCC) != null ? convertAddressArrayToString(message.getRecipients(Message.RecipientType.BCC)) : null,
-                LocalDateTime.now(), message.getSubject(), getTextFromMessage(message));
+                LocalDateTime.now(), message.getSubject(), getTextFromMessage(message), isRead, false, uid, folder);
     }
 
     private Date getCurrentDateTime() {
@@ -164,8 +199,8 @@ public class EmailService {
 
     private String convertAddressArrayToString(Address[] addresses) {
         StringBuilder sb = new StringBuilder();
-        Arrays.stream(addresses).forEach(x -> sb.append(x.toString()).append(';'));
-        return sb.toString();
+        Arrays.stream(addresses).forEach(x -> sb.append(x.toString()).append(','));
+        return sb.substring(0, sb.length() - 1);
     }
 
     private String getTextFromMessage(Message message) throws MessagingException, IOException {
