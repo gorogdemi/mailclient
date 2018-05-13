@@ -1,7 +1,6 @@
 package hu.unideb.inf.project.email.dao;
 
 import hu.unideb.inf.project.email.dao.api.MailboxFolderDAO;
-import hu.unideb.inf.project.email.model.Account;
 import hu.unideb.inf.project.email.model.MailboxFolder;
 import hu.unideb.inf.project.email.utility.EntityManagerFactoryUtil;
 
@@ -38,8 +37,16 @@ public class MailboxFolderDAOImpl implements MailboxFolderDAO, AutoCloseable {
 
     @Override
     public void remove(MailboxFolder entity) {
+        MailboxFolder folder = findById(entity.getId());
         entityManager.getTransaction().begin();
-        entityManager.remove(entity);
+        entityManager.remove(folder);
+        entityManager.getTransaction().commit();
+    }
+
+    @Override
+    public void update(MailboxFolder entity) {
+        entityManager.getTransaction().begin();
+        entityManager.merge(entity);
         entityManager.getTransaction().commit();
     }
 

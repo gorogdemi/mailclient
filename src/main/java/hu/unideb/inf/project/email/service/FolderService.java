@@ -1,22 +1,28 @@
 package hu.unideb.inf.project.email.service;
 
-import hu.unideb.inf.project.email.dao.EmailMessageDAOImpl;
 import hu.unideb.inf.project.email.dao.MailboxFolderDAOImpl;
+import hu.unideb.inf.project.email.dao.api.MailboxFolderDAO;
 import hu.unideb.inf.project.email.model.Account;
-import hu.unideb.inf.project.email.model.EmailMessage;
 import hu.unideb.inf.project.email.model.MailboxFolder;
 
 public class FolderService {
 
     private Account account;
+    private MailboxFolderDAO dao;
 
     public FolderService(Account account) {
         this.account = account;
         createSystemFoldersIfNotExist();
     }
 
-    public MailboxFolder getFolder(String folderName) {
-        return account.getFolders().stream().filter(x -> x.getName().equals(folderName)).findFirst().orElse(null);
+    public FolderService(Account account, MailboxFolderDAO dao) {
+        this.account = account;
+        this.dao = dao;
+        createSystemFoldersIfNotExist();
+    }
+
+    public MailboxFolder getFolderByName(String folderName) {
+        return account.getFolders() != null ? account.getFolders().stream().filter(x -> x.getName().equals(folderName)).findFirst().orElse(null) : null;
     }
 
     public MailboxFolder getInboxFolder() {
@@ -31,46 +37,32 @@ public class FolderService {
         return getSystemFolder("Deleted Items");
     }
 
-    public void moveMessage(EmailMessage message, MailboxFolder source, MailboxFolder destination) {
-        if (source != destination) {
-            EmailMessageDAOImpl dao = new EmailMessageDAOImpl();
-            EmailMessage newMessage = dao.findById(message.getId());
-            newMessage.setFolder(destination);
-            dao.persist(newMessage);
-            dao.close();
-            source.getMessages().remove(message);
-            destination.getMessages().add(newMessage);
-        }
-    }
-
-    public void addFolder(String folderName) {
-        MailboxFolder folder = new MailboxFolder(folderName, account);
-        MailboxFolderDAOImpl dao = new MailboxFolderDAOImpl();
+    public void addFolder(MailboxFolder folder) {
+        MailboxFolderDAO dao = getDao();
         dao.persist(folder);
         dao.close();
         account.getFolders().add(folder);
     }
 
-    public void modifyFolder(MailboxFolder modified) {
-        MailboxFolderDAOImpl dao = new MailboxFolderDAOImpl();
-        MailboxFolder newFolder = dao.findById(modified.getId());
-        newFolder.setName(modified.getName());
-        dao.persist(newFolder);
+    public void modifyFolder(MailboxFolder folder) {
+        MailboxFolderDAO dao = getDao();
+        folder.setName(folder.getName());
+        dao.update(folder);
         dao.close();
     }
 
     public void deleteFolder(MailboxFolder folder) {
-        MailboxFolderDAOImpl dao = new MailboxFolderDAOImpl();
-        dao.remove(dao.findById(folder.getId()));
+        MailboxFolderDAO dao = getDao();
+        dao.remove(folder);
         dao.close();
         account.getFolders().remove(folder);
     }
 
     private MailboxFolder getSystemFolder(String name) {
-        MailboxFolder folder = getFolder(name);
+        MailboxFolder folder = getFolderByName(name);
         if (folder == null) {
             folder = new MailboxFolder(name, account);
-            MailboxFolderDAOImpl dao = new MailboxFolderDAOImpl();
+            MailboxFolderDAO dao = getDao();
             dao.persist(folder);
             dao.close();
             account.getFolders().add(folder);
@@ -82,5 +74,9 @@ public class FolderService {
         getInboxFolder();
         getSentFolder();
         getDeletedFolder();
+    }
+
+    private MailboxFolderDAO getDao() {
+        return dao == null ? new MailboxFolderDAOImpl() : dao;
     }
 }

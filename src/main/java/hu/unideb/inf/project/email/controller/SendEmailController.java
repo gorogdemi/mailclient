@@ -16,7 +16,6 @@ import java.util.Arrays;
 
 public class SendEmailController {
 
-    private Account account;
     private EmailService emailService;
 
     @FXML
@@ -38,23 +37,18 @@ public class SendEmailController {
     private TextArea bodyField;
 
     public void initialize(Account account, EmailService emailService, EmailMessage message) {
-        this.account = account;
         this.emailService = emailService;
         senderLabel.setText(account.getEmailAddress());
         if (message != null) {
-            try {
-                InternetAddress address = new InternetAddress(message.getRecipients());
-                recipientField.setText(address.getAddress());
-                if (message.getCc() != null)
-                    ccField.setText(message.getCc());
-                if (message.getBcc() != null)
-                    bccField.setText(message.getBcc());
-                subjectField.setText(message.getSubject());
-                bodyField.setText(message.getBody());
+            if (message.getRecipients() != null) {
+                recipientField.setText(message.getRecipients());
             }
-            catch (AddressException e) {
-                e.printStackTrace();
-            }
+            if (message.getCc() != null)
+                ccField.setText(message.getCc());
+            if (message.getBcc() != null)
+                bccField.setText(message.getBcc());
+            subjectField.setText(message.getSubject());
+            bodyField.setText(message.getBody());
         }
     }
 

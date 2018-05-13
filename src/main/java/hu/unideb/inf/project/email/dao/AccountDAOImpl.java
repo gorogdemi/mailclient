@@ -38,8 +38,16 @@ public class AccountDAOImpl implements AccountDAO, AutoCloseable {
 
     @Override
     public void remove(Account entity) {
+        Account account = findById(entity.getId());
         entityManager.getTransaction().begin();
-        entityManager.remove(entity);
+        entityManager.remove(account);
+        entityManager.getTransaction().commit();
+    }
+
+    @Override
+    public void update(Account entity) {
+        entityManager.getTransaction().begin();
+        entityManager.merge(entity);
         entityManager.getTransaction().commit();
     }
 

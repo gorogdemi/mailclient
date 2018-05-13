@@ -3,7 +3,6 @@ package hu.unideb.inf.project.email.model;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 public class MailboxFolder {
@@ -48,11 +47,5 @@ public class MailboxFolder {
         if (messages == null)
             messages = new ArrayList<>();
         return messages;
-    }
-
-    public List<EmailMessage> getMessagesWithoutDeleted() {
-        if (messages == null)
-            messages = new ArrayList<>();
-        return messages.stream().filter(x -> !x.isDeleted()).collect(Collectors.toList());
     }
 }

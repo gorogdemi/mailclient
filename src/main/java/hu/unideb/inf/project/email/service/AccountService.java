@@ -3,18 +3,23 @@ package hu.unideb.inf.project.email.service;
 import hu.unideb.inf.project.email.dao.AccountDAOImpl;
 import hu.unideb.inf.project.email.dao.api.AccountDAO;
 import hu.unideb.inf.project.email.model.Account;
-import hu.unideb.inf.project.email.utility.EntityManagerFactoryUtil;
 
 import java.util.List;
 
 public class AccountService {
 
     private List<Account> accounts;
+    private AccountDAO dao;
 
     public AccountService() {
-        AccountDAOImpl dao = new AccountDAOImpl();
+        AccountDAO dao = new AccountDAOImpl();
         accounts = dao.getAllAccount();
         dao.close();
+    }
+
+    public AccountService(List<Account> accounts, AccountDAO dao) {
+        this.accounts = accounts;
+        this.dao = dao;
     }
 
     public Account getAccountByEmail(String email) {
@@ -30,32 +35,26 @@ public class AccountService {
     }
 
     public void addAccount(Account account) {
-        AccountDAOImpl dao = new AccountDAOImpl();
+        AccountDAO dao = getDao();
         dao.persist(account);
         dao.close();
         accounts.add(account);
     }
 
-    public void modifyAccount(Account modified) {
-        AccountDAOImpl dao = new AccountDAOImpl();
-        Account account = dao.findById(modified.getId());
-        account.setName(modified.getName());
-        account.setEmailAddress(modified.getEmailAddress());
-        account.setUserName(modified.getUserName());
-        account.setPassword(modified.getPassword());
-        account.setSmtpServerAddress(modified.getSmtpServerAddress());
-        account.setSmtpServerPort(modified.getSmtpServerPort());
-        account.setPop3ServerAddress(modified.getPop3ServerAddress());
-        account.setPop3ServerPort(modified.getPop3ServerPort());
-        account.setSecure(modified.isSecure());
-        dao.persist(account);
+    public void modifyAccount(Account account) {
+        AccountDAO dao = getDao();
+        dao.update(account);
         dao.close();
     }
 
     public void deleteAccount(Account account) {
-        AccountDAOImpl dao = new AccountDAOImpl();
-        dao.remove(dao.findById(account.getId()));
+        AccountDAO dao = getDao();
+        dao.remove(account);
         dao.close();
         accounts.remove(account);
+    }
+
+    private AccountDAO getDao() {
+        return dao == null ? new AccountDAOImpl() : dao;
     }
 }

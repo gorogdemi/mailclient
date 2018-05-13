@@ -16,10 +16,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -31,6 +28,8 @@ public class MainController {
     private EmailService emailService;
     private FolderService folderService;
     private MailboxFolder selectedFolder;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
+    private List<EmailMessage> selectedFolderEmails;
 
     @FXML
     private TextArea emailView;
@@ -85,18 +84,22 @@ public class MainController {
         filterBox.getItems().addAll("Mind", "Olvasatlan", "Olvasott");
         filterBox.getSelectionModel().select(0);
         filterBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            setMessageViewItems(emailService.searchEmails(selectedFolder.getMessagesWithoutDeleted(),
-                    searchField.getText().toLowerCase(), getBoolFromReadState(newValue)));
+            selectedFolderEmails = emailService.searchEmails(selectedFolder.getMessages(), searchField.getText().toLowerCase(), getBoolFromReadState(newValue))
+                    .stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed()).collect(Collectors.toList());
+            setMessageViewItems();
         });
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            setMessageViewItems(emailService.searchEmails(selectedFolder.getMessagesWithoutDeleted(), newValue.toLowerCase(), getBoolFromReadState(filterBox.getSelectionModel().getSelectedItem())));
+            selectedFolderEmails = emailService.searchEmails(selectedFolder.getMessages(), newValue.toLowerCase(), getBoolFromReadState(filterBox.getSelectionModel().getSelectedItem()))
+                    .stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed()).collect(Collectors.toList());
+            setMessageViewItems();
         });
         folderView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (folderView.getSelectionModel().getSelectedItem() != null) {
                 modifyFolderButton.setDisable(false);
                 deleteFolderButton.setDisable(false);
-                selectedFolder = folderService.getFolder(folderView.getSelectionModel().getSelectedItem());
-                setMessageViewItems(emailService.getEmailsFromFolder(selectedFolder));
+                selectedFolder = folderService.getFolderByName(folderView.getSelectionModel().getSelectedItem());
+                selectedFolderEmails = selectedFolder.getMessages().stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed()).collect(Collectors.toList());
+                setMessageViewItems();
             }
             else {
                 modifyFolderButton.setDisable(true);
@@ -111,30 +114,16 @@ public class MainController {
                 deleteEmailButton.setDisable(false);
                 moveEmailButton.setDisable(false);
                 StringBuilder sb = new StringBuilder();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
-                EmailMessage message = parseFromView(messageView.getSelectionModel().getSelectedItem());
-                String email = null;
-                try {
-                    InternetAddress address = new InternetAddress(message.getSender());
-                    String personal = address.getPersonal();
-                    if (personal != null) {
-                        address.setPersonal(personal, "utf-8");
-                    }
-                    if (address.getPersonal() != null)
-                        email = address.getPersonal() + " - " + address.getAddress();
-                } catch (AddressException | UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                sb.append("Feladó: ").append(email).append('\n');
+                EmailMessage message = selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex());
+                sb.append("Feladó: ").append(message.getSender()).append('\n');
                 sb.append("Címzett: ").append(message.getRecipients()).append('\n');
                 if (message.getCc() != null)
                     sb.append("Másolatot kap: ").append(message.getCc()).append('\n');
-                sb.append("Beérkezés ideje: ").append(message.getTime().format(formatter)).append('\n');
-                sb.append("Tárgy: ").append(message.getSubject()).append("\n\n");
+                sb.append("Beérkezés ideje: ").append(message.getTime().format(FORMATTER)).append('\n');
+                sb.append("Tárgy: ").append(message.getSubject()).append("\n------------------------------------------\n");
                 sb.append(message.getBody());
                 emailView.setText(sb.toString());
                 if (!message.isRead()) {
-                    message.setRead(true);
                     emailService.setRead(message);
                     String item = messageView.getSelectionModel().getSelectedItem();
                     messageView.getItems().set(messageView.getSelectionModel().getSelectedIndex(), item.substring(5));
@@ -157,32 +146,15 @@ public class MainController {
         else return state.equals("Olvasott");
     }
 
-    private EmailMessage parseFromView(String row) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
-        String[] splitted = row.split("\n");
-        int index = splitted[1].lastIndexOf(" - ");
-        String subject = splitted[1].substring(0, index);
-        String date = splitted[1].substring(index + 3);
-        return selectedFolder.getMessagesWithoutDeleted().stream().filter(x -> x.getSubject().equals(subject) && x.getTime().format(formatter).equals(date)).collect(Collectors.toList()).get(0);
+    private void setMessageViewItems() {
+        messageView.setItems(selectedFolderEmails.stream().filter(x -> !x.isDeleted())
+                .map(x -> String.format("%s\n%s\n%s", !x.isRead() ? "[ÚJ] " + x.getSender() : x.getSender(), x.getSubject(), x.getTime().format(FORMATTER)))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList)));
     }
 
-    private void setMessageViewItems(List<EmailMessage> messageList) {
-        messageView.setItems(messageList.stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed())
-                .map(x -> {
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
-                    try {
-                        InternetAddress address = new InternetAddress(x.getSender());
-                        String personal = address.getPersonal();
-                        if (personal != null) {
-                            address.setPersonal(personal, "utf-8");
-                            return String.format("%s\n%s - %s", !x.isRead() ? "[ÚJ] " + personal : personal, x.getSubject(), x.getTime().format(formatter));
-                        }
-                        return String.format("%s - %s\n%s", !x.isRead() ? "[ÚJ] " + address.getAddress() : address.getAddress(), x.getSubject(), x.getTime().format(formatter));
-                    } catch (AddressException | UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }).collect(Collectors.toCollection(FXCollections::observableArrayList)));
+    @FXML
+    private void handleRefresh() {
+        emailService.refreshEmails(selectedFolder);
     }
 
     @FXML
@@ -217,7 +189,7 @@ public class MainController {
         stage.setScene(new Scene(parent));
         stage.initModality(Modality.APPLICATION_MODAL);
         SendEmailController controller = loader.getController();
-        controller.initialize(account, emailService, emailService.getReplyMessage(parseFromView(messageView.getSelectionModel().getSelectedItem())));
+        controller.initialize(account, emailService, emailService.getReplyMessage(selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex())));
         stage.showAndWait();
     }
 
@@ -235,7 +207,7 @@ public class MainController {
         stage.setScene(new Scene(parent));
         stage.initModality(Modality.APPLICATION_MODAL);
         SendEmailController controller = loader.getController();
-        controller.initialize(account, emailService, emailService.getReplyToAllMessage(parseFromView(messageView.getSelectionModel().getSelectedItem())));
+        controller.initialize(account, emailService, emailService.getReplyToAllMessage(selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex())));
         stage.showAndWait();
     }
 
@@ -253,7 +225,7 @@ public class MainController {
         stage.setScene(new Scene(parent));
         stage.initModality(Modality.APPLICATION_MODAL);
         SendEmailController controller = loader.getController();
-        controller.initialize(account, emailService, emailService.getForwardMessage(parseFromView(messageView.getSelectionModel().getSelectedItem())));
+        controller.initialize(account, emailService, emailService.getForwardMessage(selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex())));
         stage.showAndWait();
     }
 
@@ -282,8 +254,9 @@ public class MainController {
             controller.initialize(account);
             stage.showAndWait();
             if (controller.getSelectedFolder() != null) {
-                folderService.moveMessage(parseFromView(messageView.getSelectionModel().getSelectedItem()), selectedFolder, folderService.getFolder(controller.getSelectedFolder()));
-                setMessageViewItems(emailService.getEmailsFromFolder(selectedFolder));
+                emailService.moveEmail(selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex()), selectedFolder, folderService.getFolderByName(controller.getSelectedFolder()));
+                selectedFolderEmails = selectedFolder.getMessages().stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed()).collect(Collectors.toList());;
+                setMessageViewItems();
             }
         }
     }
@@ -294,8 +267,9 @@ public class MainController {
         alert.setTitle("Megerősítés");
         alert.setHeaderText("Biztosan törli a kijelölt levelet?");
         alert.showAndWait().ifPresent(x -> {
-            emailService.deleteEmail(parseFromView(messageView.getSelectionModel().getSelectedItem()), selectedFolder);
-            setMessageViewItems(emailService.getEmailsFromFolder(selectedFolder));
+            emailService.deleteEmail(selectedFolderEmails.get(messageView.getSelectionModel().getSelectedIndex()), selectedFolder);
+            selectedFolderEmails = selectedFolder.getMessages().stream().sorted(Comparator.comparing(EmailMessage::getTime).reversed()).collect(Collectors.toList());;
+            setMessageViewItems();
         });
     }
 
@@ -315,8 +289,12 @@ public class MainController {
         stage.initStyle(StageStyle.UTILITY);
         stage.showAndWait();
         AccountSelectController controller = loader.getController();
-        if (controller.getSelectedEmail() != null)
-            account = MainApp.ACCOUNT_SERVICE.getAccountByEmail(controller.getSelectedEmail());
+        if (controller.getSelectedEmail() != null) {
+            if (!controller.getSelectedEmail().equals(account.getEmailAddress())) {
+                account = MainApp.ACCOUNT_SERVICE.getAccountByEmail(controller.getSelectedEmail());
+                initialize(account);
+            }
+        }
     }
 
     @FXML
@@ -336,7 +314,7 @@ public class MainController {
         FolderNameController controller = loader.getController();
         stage.showAndWait();
         if (controller.getFolderName() != null) {
-            folderService.addFolder(controller.getFolderName());
+            folderService.addFolder(new MailboxFolder(controller.getFolderName(), account));
             folderView.setItems(account.getFolders().stream().map(MailboxFolder::getName).collect(Collectors.toCollection(FXCollections::observableArrayList)));
         }
     }
@@ -385,9 +363,11 @@ public class MainController {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Megerősítés");
             alert.setHeaderText("Biztosan törli a kijelölt mappát?");
+            alert.setContentText("Ezzel a művelettel a mappában lévő összes levél is törlődik.");
             alert.showAndWait().ifPresent(x -> {
                 folderService.deleteFolder(selectedFolder);
                 folderView.setItems(account.getFolders().stream().map(MailboxFolder::getName).collect(Collectors.toCollection(FXCollections::observableArrayList)));
+                folderView.getSelectionModel().select(0);
             });
         }
     }

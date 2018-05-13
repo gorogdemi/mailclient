@@ -1,11 +1,7 @@
 package hu.unideb.inf.project.email.model;
 
-import org.hibernate.annotations.Generated;
-
-import javax.mail.Address;
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 public class EmailMessage {
@@ -26,13 +22,14 @@ public class EmailMessage {
 
     private String subject;
 
+    @Column(length = 2048)
     private String body;
 
     private boolean isRead;
 
     private boolean isDeleted;
 
-    private int uid;
+    private String uid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MailboxFolder folder;
@@ -40,7 +37,7 @@ public class EmailMessage {
     public EmailMessage() {
     }
 
-    public EmailMessage(String sender, String recipients, String cc, String bcc, LocalDateTime time, String subject, String body, boolean isRead, boolean isDeleted, int uid, MailboxFolder folder) {
+    public EmailMessage(String sender, String recipients, String cc, String bcc, LocalDateTime time, String subject, String body, boolean isRead, boolean isDeleted, String uid, MailboxFolder folder) {
         this.sender = sender;
         this.recipients = recipients;
         this.cc = cc;
@@ -134,11 +131,11 @@ public class EmailMessage {
         isDeleted = deleted;
     }
 
-    public int getUid() {
+    public String getUid() {
         return uid;
     }
 
-    public void setUid(int uid) {
+    public void setUid(String uid) {
         this.uid = uid;
     }
 

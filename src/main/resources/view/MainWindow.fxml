@@ -19,7 +19,7 @@
             <Insets bottom="70.0" top="100.0" />
          </GridPane.margin>
       </ListView>
-      <ListView fx:id="messageView" fixedCellSize="45.0" maxWidth="350.0" prefHeight="310.0" prefWidth="333.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+      <ListView fx:id="messageView" fixedCellSize="60.0" maxWidth="350.0" prefHeight="310.0" prefWidth="333.0" GridPane.halignment="LEFT" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
          <GridPane.margin>
             <Insets left="250.0" top="50.0" />
          </GridPane.margin>
@@ -29,7 +29,7 @@
             <Insets left="10.0" top="70.0" />
          </GridPane.margin>
       </Label>
-      <Button mnemonicParsing="false" onAction="#handleNewEmail" prefHeight="35.0" prefWidth="104.0" text="Új e-mail" GridPane.valignment="TOP">
+      <Button mnemonicParsing="false" onAction="#handleNewEmail" prefHeight="35.0" prefWidth="72.0" text="Új e-mail" GridPane.valignment="TOP">
          <GridPane.margin>
             <Insets left="10.0" top="5.0" />
          </GridPane.margin>
@@ -44,9 +44,9 @@
             <Insets left="490.0" top="5.0" />
          </GridPane.margin>
       </ComboBox>
-      <Button mnemonicParsing="false" onAction="#handleAccounts" prefHeight="35.0" prefWidth="104.0" text="Fiókváltás" GridPane.valignment="TOP">
+      <Button mnemonicParsing="false" onAction="#handleAccounts" prefHeight="35.0" prefWidth="76.0" text="Fiókváltás" GridPane.valignment="TOP">
          <GridPane.margin>
-            <Insets left="130.0" top="5.0" />
+            <Insets left="88.0" top="5.0" />
          </GridPane.margin>
       </Button>
       <Button fx:id="newFolderButton" mnemonicParsing="false" onAction="#handleNewFolder" prefHeight="30.0" prefWidth="74.0" text="Új mappa" GridPane.valignment="BOTTOM">
@@ -94,6 +94,11 @@
       <Button fx:id="moveEmailButton" disable="true" mnemonicParsing="false" onAction="#handleMoveEmail" prefHeight="35.0" prefWidth="78.0" text="Áthelyezés" GridPane.valignment="TOP">
          <GridPane.margin>
             <Insets left="1000.0" top="5.0" />
+         </GridPane.margin>
+      </Button>
+      <Button layoutX="95.0" layoutY="15.0" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="35.0" prefWidth="68.0" text="Frissítés" GridPane.valignment="TOP">
+         <GridPane.margin>
+            <Insets left="170.0" top="5.0" />
          </GridPane.margin>
       </Button>
    </children>

@@ -12,8 +12,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import java.io.IOException;
 
 public class MainApp extends Application {

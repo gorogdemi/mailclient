@@ -2,8 +2,6 @@ package hu.unideb.inf.project.email.controller;
 
 import hu.unideb.inf.project.email.app.MainApp;
 import hu.unideb.inf.project.email.model.Account;
-import hu.unideb.inf.project.email.service.AccountService;
-import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
