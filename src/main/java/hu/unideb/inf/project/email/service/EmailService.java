@@ -159,6 +159,7 @@ public class EmailService {
         message.setRead(true);
         dao.update(message);
         dao.close();
+        logger.debug("Message with ID {} has been read.", message.getId());
     }
 
     /**

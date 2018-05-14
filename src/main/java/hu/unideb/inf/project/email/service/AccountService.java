@@ -77,6 +77,7 @@ public class AccountService {
         dao.persist(account);
         dao.close();
         accounts.add(account);
+        logger.debug("Created account {}", account.getEmailAddress());
     }
 
     /**
@@ -88,6 +89,7 @@ public class AccountService {
         AccountDAO dao = getDao();
         dao.update(account);
         dao.close();
+        logger.debug("Account {} modified.", account.getEmailAddress());
     }
 
     /**
@@ -97,10 +99,10 @@ public class AccountService {
      */
     public void deleteAccount(Account account) {
         AccountDAO dao = getDao();
-        logger.warn("Account with e-mail address {} has been deleted.", account.getEmailAddress());
         dao.remove(account);
         dao.close();
         accounts.remove(account);
+        logger.warn("Account with e-mail address {} has been deleted.", account.getEmailAddress());
     }
 
     private AccountDAO getDao() {

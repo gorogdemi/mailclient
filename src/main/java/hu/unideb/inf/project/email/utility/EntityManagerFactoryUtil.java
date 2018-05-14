@@ -64,6 +64,7 @@ public class EntityManagerFactoryUtil implements AutoCloseable {
     public void close() {
         if (entityManagerFactory != null) {
             entityManagerFactory.close();
+            logger.debug("An EntityManagerFactory instance has been closed.");
         }
     }
 }

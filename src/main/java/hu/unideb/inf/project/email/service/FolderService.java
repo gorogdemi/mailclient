@@ -89,6 +89,7 @@ public class FolderService {
         dao.persist(folder);
         dao.close();
         account.getFolders().add(folder);
+        logger.info("Created folder {}", folder.getName());
     }
 
     /**
@@ -101,7 +102,7 @@ public class FolderService {
         folder.setName(folder.getName());
         dao.update(folder);
         dao.close();
-        logger.info("Deleted folder {}", folder.getName());
+        logger.info("Modified folder name to {}", folder.getName());
     }
 
     /**
@@ -114,6 +115,7 @@ public class FolderService {
         dao.remove(folder);
         dao.close();
         account.getFolders().remove(folder);
+        logger.info("Deleted folder {}", folder.getName());
     }
 
     private MailboxFolder getSystemFolder(String name) {
