@@ -19,12 +19,21 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
+/**
+ * Implementation of the {@code MailingUtil} interface.
+ */
 public class MailingUtilImpl implements MailingUtil {
 
     private Account account;
     private Session emailSession;
     private FolderService folderService;
 
+    /**
+     * Constructor to construct an {@code MailingUtilImpl} object.
+     *
+     * @param account an {@code Account} object to work with
+     * @param folderService a {@code FolderService} object to handle the account's folders
+     */
     public MailingUtilImpl(Account account, FolderService folderService) {
         Properties properties = new Properties();
         properties.put("mail.store.protocol", "pop3");
@@ -41,6 +50,9 @@ public class MailingUtilImpl implements MailingUtil {
         this.folderService = folderService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Message sendEmail(List<Address> to, List<Address> cc, List<Address> bcc, String subject, String body) {
         try {
@@ -62,6 +74,9 @@ public class MailingUtilImpl implements MailingUtil {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<EmailMessage> receiveEmails(List<String> uids) {
         try {
@@ -102,6 +117,9 @@ public class MailingUtilImpl implements MailingUtil {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public EmailMessage convertMessageToEmailMessage(Message message, boolean isRead, String uid, MailboxFolder folder) {
         try {
             return new EmailMessage(convertAddressArrayToString(message.getFrom()),

@@ -22,11 +22,6 @@ public class FolderServiceTest {
         folder = new MailboxFolder("Spam", account);
         MailboxFolderDAO dao = new MailboxFolderDAO() {
             @Override
-            public List<MailboxFolder> getAllMailboxFolder() {
-                return null;
-            }
-
-            @Override
             public void persist(MailboxFolder entity) {
                 if (entity == null)
                     throw new NullPointerException();

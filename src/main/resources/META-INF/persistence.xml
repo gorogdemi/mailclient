@@ -7,9 +7,23 @@
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:email.db"/>
-
             <property name="hibernate.dialect" value="org.hibernate.dialect.SQLiteDialect"/>
             <property name="hibernate.hbm2ddl.auto" value="none" />
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.use_sql_comments" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+            <property name="hibernate.enable_lazy_load_no_trans" value="true"/>
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="email-persistence-unit-create">
+        <class>model.Account</class>
+        <class>model.EmailMessage</class>
+        <class>model.MailboxFolder</class>
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:email.db"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.SQLiteDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="create" />
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.use_sql_comments" value="true"/>
             <property name="hibernate.format_sql" value="true"/>

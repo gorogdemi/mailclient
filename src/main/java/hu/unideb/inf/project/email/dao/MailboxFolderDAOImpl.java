@@ -6,23 +6,25 @@ import hu.unideb.inf.project.email.utility.EntityManagerFactoryUtil;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.TypedQuery;
-import java.util.List;
 
+/**
+ * Impelemtation of the {@code MailboxFolderDAO} interface.
+ */
 public class MailboxFolderDAOImpl implements MailboxFolderDAO, AutoCloseable {
 
     private EntityManager entityManager;
 
+    /**
+     * Constructor to construct the {@code MailboxFolderDAOImpl} object.
+     */
     public MailboxFolderDAOImpl() {
         EntityManagerFactory entityManagerFactory = EntityManagerFactoryUtil.getInstance().getEntityManagerFactory();
         this.entityManager = entityManagerFactory.createEntityManager();
     }
-    @Override
-    public List<MailboxFolder> getAllMailboxFolder() {
-        TypedQuery<MailboxFolder> query = entityManager.createQuery("SELECT f FROM hu.unideb.inf.project.email.model.MailboxFolder f", MailboxFolder.class);
-        return query.getResultList();
-    }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void persist(MailboxFolder entity) {
         entityManager.getTransaction().begin();
@@ -30,11 +32,18 @@ public class MailboxFolderDAOImpl implements MailboxFolderDAO, AutoCloseable {
         entityManager.getTransaction().commit();
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MailboxFolder findById(Integer id) {
         return entityManager.find(MailboxFolder.class, id);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void remove(MailboxFolder entity) {
         MailboxFolder folder = findById(entity.getId());
@@ -43,6 +52,9 @@ public class MailboxFolderDAOImpl implements MailboxFolderDAO, AutoCloseable {
         entityManager.getTransaction().commit();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void update(MailboxFolder entity) {
         entityManager.getTransaction().begin();
@@ -50,6 +62,9 @@ public class MailboxFolderDAOImpl implements MailboxFolderDAO, AutoCloseable {
         entityManager.getTransaction().commit();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() {
         if (entityManager != null) {

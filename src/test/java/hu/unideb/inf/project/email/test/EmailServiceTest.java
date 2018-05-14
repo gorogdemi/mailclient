@@ -80,11 +80,6 @@ public class EmailServiceTest {
         };
         MailboxFolderDAO dao2 = new MailboxFolderDAO() {
             @Override
-            public List<MailboxFolder> getAllMailboxFolder() {
-                return null;
-            }
-
-            @Override
             public void persist(MailboxFolder entity) {
                 if (entity == null)
                     throw new NullPointerException();
