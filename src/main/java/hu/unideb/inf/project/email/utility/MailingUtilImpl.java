@@ -1,12 +1,15 @@
 package hu.unideb.inf.project.email.utility;
 
 import com.sun.mail.pop3.POP3Folder;
+import hu.unideb.inf.project.email.app.MainApp;
 import hu.unideb.inf.project.email.model.Account;
 import hu.unideb.inf.project.email.model.EmailMessage;
 import hu.unideb.inf.project.email.model.MailboxFolder;
 import hu.unideb.inf.project.email.service.FolderService;
 import hu.unideb.inf.project.email.utility.api.MailingUtil;
 import org.jsoup.Jsoup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.*;
 import javax.mail.internet.AddressException;
@@ -27,6 +30,7 @@ public class MailingUtilImpl implements MailingUtil {
     private Account account;
     private Session emailSession;
     private FolderService folderService;
+    private static Logger logger = LoggerFactory.getLogger(MainApp.class);
 
     /**
      * Constructor to construct an {@code MailingUtilImpl} object.
@@ -65,6 +69,8 @@ public class MailingUtilImpl implements MailingUtil {
                 message.setRecipients(Message.RecipientType.BCC, (bcc.toArray(new Address[0])));
             message.setSentDate(getCurrentDateTime());
             message.setSubject(subject);
+            if (subject.equals(""))
+                logger.warn("No subject provided!");
             message.setText(body);
             sendMessage(message);
             return message;
@@ -84,6 +90,7 @@ public class MailingUtilImpl implements MailingUtil {
             emailStore.connect(account.getUserName(), account.getPassword());
             POP3Folder emailFolder = (POP3Folder) emailStore.getFolder("INBOX");
             emailFolder.open(Folder.READ_ONLY);
+            logger.debug("Connected to POP3 server.");
 
             SearchTerm term = new SearchTerm() {
                 @Override
@@ -102,6 +109,7 @@ public class MailingUtilImpl implements MailingUtil {
             Message[] newMessages = (uids == null || uids.isEmpty()) ? emailFolder.getMessages() : emailFolder.search(term);
             emailFolder.fetch(newMessages, fp);
             List<EmailMessage> messageList = new ArrayList<>();
+            logger.debug("Downloaded {} messages.", newMessages.length);
             for (int i = 0, j = 1; i < newMessages.length && j <= 30; i++, j++) {
                 Message message = newMessages[newMessages.length - j];
                 EmailMessage emailMessage = convertMessageToEmailMessage(message, false, emailFolder.getUID(message), folderService.getInboxFolder());
@@ -138,6 +146,7 @@ public class MailingUtilImpl implements MailingUtil {
         transport.connect(account.getUserName(), account.getPassword());
         transport.sendMessage(message, message.getAllRecipients());
         transport.close();
+        logger.info("An e-mail has been sent to the server");
     }
 
     private Date getCurrentDateTime() {

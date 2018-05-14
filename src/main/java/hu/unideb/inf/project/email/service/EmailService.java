@@ -122,9 +122,12 @@ public class EmailService {
             dao.update(message);
             dao.close();
             source.getMessages().remove(message);
+            logger.debug("Message with ID {} deleted from Deleted Items", message.getId());
         }
-        else
+        else {
             moveEmail(message, source, folderService.getDeletedFolder());
+            logger.debug("Message with ID {} moved from {} to Deleted Items", message.getId(), source.getName());
+        }
     }
 
     /**
@@ -142,6 +145,7 @@ public class EmailService {
             dao.close();
             source.getMessages().remove(message);
             destination.getMessages().add(message);
+            logger.debug("Message with ID {} moved from {} to {}", message.getId(), source.getName(), destination.getName());
         }
     }
 
@@ -191,9 +195,9 @@ public class EmailService {
         folderService.getInboxFolder().getMessages().addAll(messageList);
         for (EmailMessage message : messageList) {
             logger.debug("==============================");
-            logger.debug("Subject: " + message.getSubject());
-            logger.debug("From: " + message.getSender());
-            logger.debug("Body: " + message.getBody());
+            logger.debug("From: {}", message.getSender());
+            logger.debug("Subject: {}", message.getSubject());
+            logger.debug("Body: {}", message.getBody());
         }
     }
 

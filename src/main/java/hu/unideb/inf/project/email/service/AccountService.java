@@ -1,8 +1,11 @@
 package hu.unideb.inf.project.email.service;
 
+import hu.unideb.inf.project.email.app.MainApp;
 import hu.unideb.inf.project.email.dao.AccountDAOImpl;
 import hu.unideb.inf.project.email.dao.api.AccountDAO;
 import hu.unideb.inf.project.email.model.Account;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -13,6 +16,7 @@ public class AccountService {
 
     private List<Account> accounts;
     private AccountDAO dao;
+    private static Logger logger = LoggerFactory.getLogger(MainApp.class);
 
     /**
      * The default constructor which create an {@code AccountService} object.
@@ -93,6 +97,7 @@ public class AccountService {
      */
     public void deleteAccount(Account account) {
         AccountDAO dao = getDao();
+        logger.warn("Account with e-mail address {} has been deleted.", account.getEmailAddress());
         dao.remove(account);
         dao.close();
         accounts.remove(account);

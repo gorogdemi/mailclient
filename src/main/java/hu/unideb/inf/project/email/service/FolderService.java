@@ -1,9 +1,12 @@
 package hu.unideb.inf.project.email.service;
 
+import hu.unideb.inf.project.email.app.MainApp;
 import hu.unideb.inf.project.email.dao.MailboxFolderDAOImpl;
 import hu.unideb.inf.project.email.dao.api.MailboxFolderDAO;
 import hu.unideb.inf.project.email.model.Account;
 import hu.unideb.inf.project.email.model.MailboxFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service class for handlig mailbox folders.
@@ -12,6 +15,7 @@ public class FolderService {
 
     private Account account;
     private MailboxFolderDAO dao;
+    private static Logger logger = LoggerFactory.getLogger(MainApp.class);
 
     /**
      * The default constructor which create a {@code FolderService} object.
@@ -97,6 +101,7 @@ public class FolderService {
         folder.setName(folder.getName());
         dao.update(folder);
         dao.close();
+        logger.info("Deleted folder {}", folder.getName());
     }
 
     /**
@@ -119,6 +124,7 @@ public class FolderService {
             dao.persist(folder);
             dao.close();
             account.getFolders().add(folder);
+            logger.info("Created system folder {}", folder.getName());
         }
         return folder;
     }

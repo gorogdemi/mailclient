@@ -1,5 +1,9 @@
 package hu.unideb.inf.project.email.utility;
 
+import hu.unideb.inf.project.email.app.MainApp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.io.File;
@@ -14,6 +18,7 @@ public class EntityManagerFactoryUtil implements AutoCloseable {
     private static final EntityManagerFactoryUtil singleton = new EntityManagerFactoryUtil();
     private static final String PERSISTENCE_UNIT_NAME = "email-persistence-unit";
     private static final String CREATE_PERSISTENCE_UNIT_NAME = "email-persistence-unit-create";
+    private static Logger logger = LoggerFactory.getLogger(MainApp.class);
     private EntityManagerFactory entityManagerFactory;
 
     private EntityManagerFactoryUtil() {}
@@ -41,6 +46,7 @@ public class EntityManagerFactoryUtil implements AutoCloseable {
                 entityManagerFactory = Persistence.createEntityManagerFactory(CREATE_PERSISTENCE_UNIT_NAME);
                 try {
                     DriverManager.getConnection("jdbc:sqlite:email.db");
+                    logger.info("Created database file.");
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
